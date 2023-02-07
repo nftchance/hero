@@ -75,11 +75,11 @@ The supporting schema of the Hero's Journey API is as follows:
 
 As the name suggests, this function pins a Journey to the Bulletin Board. A Journey is a collection of Quests that Heroes can embark on, to any length, criteria of completion and rewards you desire.
 
-### `unpinJourney(Journey)`
+### `unpinJourney()`
 
 As the inverse of `pinJourney`, this function being called by the Journey caller prevents any new Heroes from completing any quest in the Journey.
 
-### `embark(journeyId, questId)`
+### `embark(questId)`
 
 This function is called by a Hero to embark on a Quest. Like the journeys and quests in your favorite books, the hero must have the required `balance` of the `badge` in their wallet to embark on the Quest.
 
