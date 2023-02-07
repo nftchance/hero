@@ -37,22 +37,33 @@ The supporting schema of the Hero's Journey API is as follows:
         uint256 balance;
     }
 
-    struct Quest {
-        address to;
-        bytes data;
-        uint256 value;
-        uint256 stopsRequired;
-        Stop[] stops;
-        Reward[] rewards;
-    }
-
     struct Reward {
-        IERC1155 token;
+        IERC20 token;
         uint256 id;
         uint256 amount;
     }
 
+    struct Badge {
+        bool accountBound;
+        uint256 id;
+        uint256 amount;
+        string uri;
+        address[] delegates;
+    }
+
+    struct Quest {
+        address to;
+        bytes data;
+        uint256 value;
+        uint256 max;
+        uint256 stopsRequired;
+        Stop[] stops;
+        Reward[] rewards;
+        Badge badge;
+    }
+
     struct Journey {
+        IBadger badgerOrganization;
         address caller;
         uint256 start;
         uint256 end;
