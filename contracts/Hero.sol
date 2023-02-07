@@ -3,7 +3,7 @@
 pragma solidity ^0.8.17;
 
 /// @dev Core dependencies.
-import {IHerosJourney} from "./IHerosJourney.sol";
+import {IHerosJourney} from "./interfaces/IHerosJourney.sol";
 
 /// @dev Helpers.
 import {Bulletin} from "./Bulletin.sol";

@@ -3,8 +3,8 @@
 pragma solidity ^0.8.17;
 
 /// @dev Core dependencies.
-import {IHerosJourney} from "./IHerosJourney.sol";
-import {IBadger} from "./IBadger.sol";
+import {IHerosJourney} from "./interfaces/IHerosJourney.sol";
+import {IBadger} from "./interfaces/IBadger.sol";
 
 /// @dev Helpers.
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
