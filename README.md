@@ -13,7 +13,7 @@ This primitive designed for:
 
 ## The Hero's Journey
 
-![The Hero's Journey](./cover.png)
+![The Hero's Journey](./optimism.png)
 
 The Hero's Journey is a narrative-structured EVM-primitive built on the devices used for thousands of years to tell stories... a story of a hero who goes on a journey, and in a decisive crisis wins a victory, and then comes home changed or transformed.
 
