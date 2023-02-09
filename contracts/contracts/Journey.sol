@@ -22,7 +22,11 @@ contract Journey is IHerosJourney {
     ///                      STATE                       ///
     ////////////////////////////////////////////////////////
 
+    /// @dev Keep track of the factory that deployed this journey.
     JourneyFactory public immutable factory;
+
+    /// @dev Keep track of the story that has already unfolded.
+    mapping(address => mapping(uint256 => uint256)) public story;
 
     ////////////////////////////////////////////////////////
     ///                   CONSTRUCTOR                    ///
@@ -85,18 +89,29 @@ contract Journey is IHerosJourney {
 
         /// @dev Confirm the journey is still active.
         require(
-            adventure.start >= block.timestamp && adventure.end <= block.timestamp,
+            adventure.start >= block.timestamp &&
+                adventure.end <= block.timestamp,
             "Hero: Journey must be active to embark"
         );
 
         /// @dev Load in the quest.
         Quest memory quest = adventure.quests[_questId];
 
+        require(
+            _canCall(msg.sender, _questId, quest.max),
+            "Hero: User has already embarked on this quest the maximum amount of times."
+        );
+
         /// @dev Confirm the user has the required stops.
         require(
-            _canCall(msg.sender, quest.stops, quest.stopsRequired),
+            _hasBadges(msg.sender, quest.stops, quest.stopsRequired),
             "Hero: User does not have required stops"
         );
+
+        /// @dev Account for the usage of this Hero.
+        unchecked { 
+            story[msg.sender][_questId]++;
+        }
 
         /// @dev Call the function that was prepared by the Journey creator.
         for (uint256 i; i < quest.transactions.length; i++) {
@@ -138,13 +153,28 @@ contract Journey is IHerosJourney {
     ////////////////////////////////////////////////////////
 
     /**
+     * @dev Determines if a user can call a function.
+     * @param user The user to check.
+     * @param questId The quest to check.
+     * @param max The maximum number of times the user can call the function.
+     * @return True if the user can call the function, false otherwise.
+     */
+    function _canCall(
+        address user,
+        uint256 questId,
+        uint256 max
+    ) internal view returns (bool) {
+        return story[user][questId] < max;
+    }
+
+    /**
      * @dev Determines if a user has the required credentials to call a function.
      * @param user The user to check.
      * @param stops The stops to check.
      * @param stopsRequired The number of stops required.
      * @return True if the user has the required credentials, false otherwise.
      */
-    function _canCall(
+    function _hasBadges(
         address user,
         Stop[] memory stops,
         uint256 stopsRequired
