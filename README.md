@@ -30,11 +30,21 @@ The Hero's Journey API is a simple API that allows you to create a Journey, and 
 The supporting schema of the Hero's Journey API is as follows:
 
 ```solidity
+    ////////////////////////////////////////////////////////
+    ///                      SCHEMA                      ///
+    ////////////////////////////////////////////////////////
+
     struct Stop {
         IERC1155 badge;
         uint8 mandatory;
         uint256 id;
         uint256 balance;
+    }
+
+    struct Transaction {
+        address target;
+        bytes data;
+        uint256 value;
     }
 
     struct Reward {
@@ -57,9 +67,10 @@ The supporting schema of the Hero's Journey API is as follows:
         uint256 value;
         uint256 max;
         uint256 stopsRequired;
-        Stop[] stops;
-        Reward[] rewards;
-        Badge badge;
+        Stop[] stops; /// ----------------- @dev Required to complete quest.
+        Transaction[] transactions; /// --- @dev Transactions inside quest.
+        Reward[] rewards; /// ------------- @dev ERC20 token(s).
+        Badge badge; /// ------------------ @dev ERC1155 badge.
     }
 
     struct Journey {
@@ -67,8 +78,32 @@ The supporting schema of the Hero's Journey API is as follows:
         address caller;
         uint256 start;
         uint256 end;
-        Quest[] quests;
+        Quest[] quests; /// ---------------- @dev Quests available to complete.
     }
+
+    ////////////////////////////////////////////////////////
+    ///                      EVENTS                      ///
+    ////////////////////////////////////////////////////////
+
+    event JourneyPinned(
+        address indexed hero,
+        address indexed caller,
+        uint256 start,
+        uint256 end
+    );
+
+    event JourneyUnpinned(
+        address indexed hero,
+        address indexed caller,
+        uint256 start,
+        uint256 end
+    );
+
+    event QuestCompleted(
+        address indexed hero,
+        address indexed caller,
+        uint256 questId
+    );
 ```
 
 ### `pinJourney(Journey)`
@@ -77,11 +112,11 @@ As the name suggests, this function pins a Journey to the Bulletin Board. A Jour
 
 ### `unpinJourney()`
 
-As the inverse of `pinJourney`, this function being called by the Journey caller prevents any new Heroes from completing any quest in the Journey.
+As the inverse of `pinJourney`, this function being called by the Journey caller prevents any new Heroes from completing any quest in the Journey and withdraws all remaining reward tokens back to the Journey caller.
 
 ### `embark(questId)`
 
-This function is called by a Hero to embark on a Quest. Like the journeys and quests in your favorite books, the hero must have the required `balance` of the `badge` in their wallet to embark on the Quest.
+This function is called by a Hero to embark on a Quest. Like the journeys and quests in your favorite books, the hero must have the required `balance` of the `badge` in their wallet to embark on the Quest. Upon completion, the Hero is rewarded with the `rewards` and `badge` as defined in the Quest automatically without any additional validation or delay of payment.
 
 ## The badging and reward token model
 
