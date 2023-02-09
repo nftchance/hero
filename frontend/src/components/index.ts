@@ -1,4 +1,4 @@
 export { Account } from './Account'
 export { Connect } from './Connect'
-export { MintNFT } from './MintNFT'
+export { Embark } from './Embark'
 export { NetworkSwitcher } from './NetworkSwitcher'

@@ -2,20 +2,20 @@ import { defineConfig } from '@wagmi/cli'
 import { react } from '@wagmi/cli/plugins'
 import * as chains from 'wagmi/chains'
 
-import { wagmiMintExampleAbi } from './abis/wagmiMintExample'
+import { JourneyAbi } from './abis/Journey'
+import { JourneyFactoryAbi } from './abis/JourneyFactory'
 
 export default defineConfig(() => {
   return {
-    out: 'src/generated.ts',
+    out: 'src/hooks/useContract.ts',
     contracts: [
       {
-        abi: wagmiMintExampleAbi,
-        name: 'WagmiMintExample',
-        address: {
-          [chains.mainnet.id]: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
-          [chains.goerli.id]: '0xfba3912ca04dd458c843e2ee08967fc04f3579c2',
-        },
-      },
+        abi: JourneyAbi,
+        name: 'Journey',
+      }, {
+        abi: JourneyFactoryAbi,
+        name: 'JourneyFactory',
+      }
     ],
     plugins: [react()],
   }

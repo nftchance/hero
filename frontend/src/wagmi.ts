@@ -6,8 +6,10 @@ import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
 import { publicProvider } from 'wagmi/providers/public'
 
+const mode = import.meta.env?.MODE
+
 const { chains, provider, webSocketProvider } = configureChains(
-  [mainnet, ...(import.meta.env?.MODE === 'development' ? [goerli] : [])],
+  [mainnet, ...(mode === 'development' ? [goerli] : [])],
   [
     publicProvider(),
   ],
