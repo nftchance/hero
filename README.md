@@ -35,7 +35,7 @@ The supporting schema of the Hero's Journey API is as follows:
     ////////////////////////////////////////////////////////
 
     struct Stop {
-        IERC1155 badge;
+        ERC1155 badge;
         uint8 mandatory;
         uint256 id;
         uint256 balance;
@@ -48,7 +48,7 @@ The supporting schema of the Hero's Journey API is as follows:
     }
 
     struct Reward {
-        IERC20 token;
+        ERC20 token;
         uint256 id;
         uint256 amount;
     }
@@ -73,7 +73,7 @@ The supporting schema of the Hero's Journey API is as follows:
         Badge badge; /// ------------------ @dev ERC1155 badge.
     }
 
-    struct Journey {
+    struct Adventure {
         IBadger badgerOrganization;
         address caller;
         uint256 start;
@@ -86,24 +86,15 @@ The supporting schema of the Hero's Journey API is as follows:
     ////////////////////////////////////////////////////////
 
     event JourneyPinned(
-        address indexed hero,
+        Journey indexed journey,
         address indexed caller,
         uint256 start,
         uint256 end
     );
 
-    event JourneyUnpinned(
-        address indexed hero,
-        address indexed caller,
-        uint256 start,
-        uint256 end
-    );
+    event JourneyUnpinned();
 
-    event QuestCompleted(
-        address indexed hero,
-        address indexed caller,
-        uint256 questId
-    );
+    event QuestCompleted(address indexed caller, uint256 questId);
 ```
 
 ### `pinJourney(Journey)`
