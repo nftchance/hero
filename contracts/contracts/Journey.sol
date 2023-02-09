@@ -42,18 +42,12 @@ contract Journey is IHerosJourney {
      */
     function unpinJourney() external {
         /// @dev Load in the journey.
-        Adventure memory adventure = factory.getAdventure(address(this));
+        Adventure memory adventure = factory.getAdventure(this);
 
         /// @dev Confirm the user set the caller correctly.
         require(
             adventure.caller == msg.sender,
             "Hero: Journey caller must be msg.sender"
-        );
-
-        /// @dev Confirm the Journey is active.
-        require(
-            adventure.end >= block.timestamp,
-            "Hero: Journey must be active to unpin"
         );
 
         /// @dev Prevent any future interactions with the journey.
@@ -87,7 +81,7 @@ contract Journey is IHerosJourney {
      */
     function embark(uint256 _questId) external payable {
         /// @dev Load in the journey.
-        Adventure memory adventure = factory.getAdventure(address(this));
+        Adventure memory adventure = factory.getAdventure(this);
 
         /// @dev Confirm the journey is still active.
         require(

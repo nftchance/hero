@@ -30,7 +30,7 @@ contract JourneyFactory is IHerosJourney {
     uint256 adventureCount;
 
     /// @dev Keeping track of the adventures inside a journey.
-    mapping(address => Adventure) public journeyAddressToAdventure;
+    mapping(Journey => Adventure) public journeyToAddress;
 
     /// @dev An empty payment token as minting is action-gated.
     IBadger.PaymentToken public NULL_PAYMENT_TOKEN =
@@ -62,11 +62,11 @@ contract JourneyFactory is IHerosJourney {
         /// @dev Deploy the new clone.
         journey = new Journey{salt: bytes32(journeyId)}();
 
-        /// @dev Get the address of the Journey deployed.
-        address journeyAddress = address(journey);
-
         /// @dev Save the journey.
-        journeyAddressToAdventure[journeyAddress] = _adventure;
+        journeyToAddress[journey] = _adventure;
+
+        /// @dev Get the address of the deployed journey.
+        address journeyAddress = address(journey);
 
         /// @dev Loop through all of the quests and instantiate the badges.
         for (uint256 i; i < _adventure.quests.length; i++) {
@@ -160,11 +160,11 @@ contract JourneyFactory is IHerosJourney {
      * @param _journey The address of the journey.
      * @return The adventure of the journey.
      */
-    function getAdventure(address _journey)
+    function getAdventure(Journey _journey)
         external
         view
         returns (Adventure memory)
     {
-        return journeyAddressToAdventure[_journey];
+        return journeyToAddress[_journey];
     }
 }
