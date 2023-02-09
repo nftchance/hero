@@ -7,5 +7,9 @@
     "ethers": "^5.7.2",
     "hardhat": "^2.12.6",
     "wagmi": "^0.11.5"
+  },
+  "dependencies": {
+    "hardhat-contract-sizer": "^2.8.0",
+    "solmate": "^6.7.0"
   }
 }

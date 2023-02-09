@@ -3,16 +3,20 @@
 pragma solidity ^0.8.17;
 
 /// @dev Core dependencies.
-import {IHerosJourney} from "./interfaces/IHerosJourney.sol";
+import {JourneyFactory} from "./JourneyFactory.sol";
 
 /// @dev Helpers.
-import {JourneyFactory} from "./JourneyFactory.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IHerosJourney} from "./interfaces/IHerosJourney.sol";
 import {IBadger} from "./interfaces/IBadger.sol";
 
+/// @dev Tokens.
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
+
+/// @dev Libraries.
+import {SafeTransferLib} from "solmate/src/utils/SafeTransferLib.sol";
+
 contract Journey is IHerosJourney {
-    using SafeERC20 for IERC20;
+    using SafeTransferLib for ERC20;
 
     ////////////////////////////////////////////////////////
     ///                      STATE                       ///
@@ -38,27 +42,27 @@ contract Journey is IHerosJourney {
      */
     function unpinJourney() external {
         /// @dev Load in the journey.
-        Journey memory journey = factory.getJourney(address(this));
+        Adventure memory adventure = factory.getAdventure(address(this));
 
         /// @dev Confirm the user set the caller correctly.
         require(
-            journey.caller == msg.sender,
+            adventure.caller == msg.sender,
             "Hero: Journey caller must be msg.sender"
         );
 
         /// @dev Confirm the Journey is active.
         require(
-            journey.end >= block.timestamp,
+            adventure.end >= block.timestamp,
             "Hero: Journey must be active to unpin"
         );
 
         /// @dev Prevent any future interactions with the journey.
-        journey.end = block.timestamp;
+        adventure.end = block.timestamp;
 
         /// @dev Transfer all the remaining rewards to the caller.
-        for (uint256 i; i < journey.quests.length; i++) {
+        for (uint256 i; i < adventure.quests.length; i++) {
             /// @dev Load the quest into the stack.
-            Quest memory quest = journey.quests[i];
+            Quest memory quest = adventure.quests[i];
 
             /// @dev Loop through all the rewards for every quest.
             for (uint256 j; j < quest.rewards.length; j++) {
@@ -74,12 +78,7 @@ contract Journey is IHerosJourney {
         }
 
         /// @dev Emit the event.
-        emit JourneyUnpinned(
-            address(this),
-            journey.caller,
-            journey.start,
-            journey.end
-        );
+        emit JourneyUnpinned();
     }
 
     /**
@@ -88,16 +87,16 @@ contract Journey is IHerosJourney {
      */
     function embark(uint256 _questId) external payable {
         /// @dev Load in the journey.
-        Journey memory journey = factory.getJourney(address(this));
+        Adventure memory adventure = factory.getAdventure(address(this));
 
         /// @dev Confirm the journey is still active.
         require(
-            journey.start >= block.timestamp && journey.end <= block.timestamp,
+            adventure.start >= block.timestamp && adventure.end <= block.timestamp,
             "Hero: Journey must be active to embark"
         );
 
         /// @dev Load in the quest.
-        Quest memory quest = journey.quests[_questId];
+        Quest memory quest = adventure.quests[_questId];
 
         /// @dev Confirm the user has the required stops.
         require(
@@ -129,7 +128,7 @@ contract Journey is IHerosJourney {
         }
 
         /// @dev Mint the badge.
-        journey.badgerOrganization.leaderMint(
+        adventure.badgerOrganization.leaderMint(
             msg.sender,
             quest.badge.id,
             quest.badge.amount,
@@ -137,7 +136,7 @@ contract Journey is IHerosJourney {
         );
 
         /// @dev Emit the event.
-        emit QuestCompleted(address(this), msg.sender, _questId);
+        emit QuestCompleted(msg.sender, _questId);
     }
 
     ////////////////////////////////////////////////////////
