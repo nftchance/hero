@@ -11,7 +11,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract Bulletin is IHerosJourney {
+contract JourneyFactory is IHerosJourney {
     using Clones for address;
     using SafeERC20 for IERC20;
 
@@ -23,10 +23,9 @@ contract Bulletin is IHerosJourney {
     address public journeySingleton;
 
     /// @dev The number of journeys.
-    uint256 journeys;
+    uint256 totalJourneys;
 
-    /// @dev Hotspot for the last pinned journey.
-    Journey public journey;
+    mapping(address => Journey) public journeys;
 
     /// @dev An empty payment token as minting is action-gated.
     IBadger.PaymentToken public NULL_PAYMENT_TOKEN =
@@ -40,25 +39,25 @@ contract Bulletin is IHerosJourney {
      * @dev Allows any individual to permissionlessly start a journey.
      * @param _journey The journey to start.
      */
-    function pinJourney(Journey memory _journey) external {
+    function pinJourney(Journey calldata _journey) external {
         /// @dev Confirm the user set the caller correctly.
         require(
             _journey.caller == msg.sender,
             "Hero: Journey caller must be msg.sender"
         );
 
-        /// @dev Save the journey.
-        journey = _journey;
-
         /// @dev Instantiate the 'delegates' for the journey.
-        address heroAddress = journeySingleton.clone();
+        address journeyAddress = journeySingleton.clone();
+
+        /// @dev Save the journey.
+        journeys[journeyAddress] = _journey;
 
         /// @dev Load the stack.
         uint256 i;
 
         /// @dev Loop through all of the quests and instantiate the badges.
-        for (i = 0; i < journey.quests.length; i++) {
-            Quest memory quest = journey.quests[i];
+        for (i = 0; i < _journey.quests.length; i++) {
+            Quest memory quest = _journey.quests[i];
 
             /// @dev Transfer all of the rewards to the Journey.
             for (uint256 j; j < quest.rewards.length; j++) {
@@ -74,18 +73,18 @@ contract Bulletin is IHerosJourney {
             }
 
             /// @dev Manage the badge if the quest has an integrated organization.
-            if (journey.badgerOrganization != IBadger(address(0))) {
+            if (_journey.badgerOrganization != IBadger(address(0))) {
                 /// @dev Get the badge out of memory due to depth.
                 Badge memory badge = quest.badge;
 
                 /// @dev Append the hero address to the list of delegates of this badge.
-                badge.delegates[badge.delegates.length] = heroAddress;
+                badge.delegates[badge.delegates.length] = journeyAddress;
 
                 /// @dev Set the ID of the badge.
-                badge.id = journeys++;
+                badge.id = totalJourneys++;
 
                 /// @dev Create the badge in the Badger organization.
-                journey.badgerOrganization.setBadge(
+                _journey.badgerOrganization.setBadge(
                     badge.id, /// ------------------ @dev The ID of the journey (badge).
                     false, /// --------------------- @dev The badge is not claimable.
                     badge.accountBound, /// -------- @dev The badge is account bound.
@@ -99,10 +98,10 @@ contract Bulletin is IHerosJourney {
 
         /// @dev Emit the creation of the journey.
         emit JourneyPinned(
-            heroAddress,
-            journey.caller,
-            journey.start,
-            journey.end
+            journeyAddress,
+            _journey.caller,
+            _journey.start,
+            _journey.end
         );
     }
 
@@ -113,7 +112,11 @@ contract Bulletin is IHerosJourney {
     /**
      * @dev Enables contracts to get the last pinned journey.
      */
-    function getJourney() external view returns (Journey memory) {
-        return journey;
+    function getJourney(address _journey)
+        external
+        view
+        returns (Journey memory)
+    {
+        return journeys[_journey];
     }
 }

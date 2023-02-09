@@ -6,27 +6,27 @@ pragma solidity ^0.8.17;
 import {IHerosJourney} from "./interfaces/IHerosJourney.sol";
 
 /// @dev Helpers.
-import {Bulletin} from "./Bulletin.sol";
+import {JourneyFactory} from "./JourneyFactory.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IBadger} from "./interfaces/IBadger.sol";
 
-contract Hero is IHerosJourney {
+contract Journey is IHerosJourney {
     using SafeERC20 for IERC20;
 
     ////////////////////////////////////////////////////////
     ///                      STATE                       ///
     ////////////////////////////////////////////////////////
 
-    /// @dev Store the journey -- The chain *is* a database :(
-    Journey public journey;
+    JourneyFactory public immutable factory;
 
     ////////////////////////////////////////////////////////
     ///                   CONSTRUCTOR                    ///
     ////////////////////////////////////////////////////////
 
     constructor() {
-        /// @dev Load in the journey.
-        journey = Bulletin(msg.sender).getJourney();
+        /// @dev Load in the factory.
+        factory = JourneyFactory(msg.sender);
     }
 
     ////////////////////////////////////////////////////////
@@ -37,6 +37,9 @@ contract Hero is IHerosJourney {
      * @dev Allows the caller of a journey to unpin it.
      */
     function unpinJourney() external {
+        /// @dev Load in the journey.
+        Journey memory journey = factory.getJourney(address(this));
+
         /// @dev Confirm the user set the caller correctly.
         require(
             journey.caller == msg.sender,
@@ -53,8 +56,8 @@ contract Hero is IHerosJourney {
         journey.end = block.timestamp;
 
         /// @dev Transfer all the remaining rewards to the caller.
-        for(uint256 i; i < journey.quests.length; i++) {
-            /// @dev Load the quest into the stack. 
+        for (uint256 i; i < journey.quests.length; i++) {
+            /// @dev Load the quest into the stack.
             Quest memory quest = journey.quests[i];
 
             /// @dev Loop through all the rewards for every quest.
@@ -83,7 +86,10 @@ contract Hero is IHerosJourney {
      * @dev Allows an individual to embark on a specific quest of a journey.
      * @param _questId The quest to embark on.
      */
-    function embark(uint256 _questId) external {
+    function embark(uint256 _questId) external payable {
+        /// @dev Load in the journey.
+        Journey memory journey = factory.getJourney(address(this));
+
         /// @dev Confirm the journey is still active.
         require(
             journey.start >= block.timestamp && journey.end <= block.timestamp,
@@ -95,17 +101,23 @@ contract Hero is IHerosJourney {
 
         /// @dev Confirm the user has the required stops.
         require(
-            _canCall(msg.sender, quest),
+            _canCall(msg.sender, quest.stops, quest.stopsRequired),
             "Hero: User does not have required stops"
         );
 
-        /// @dev Execute the quest.
-        (bool success, ) = quest.to.call{value: quest.value}(quest.data);
+        /// @dev Call the function that was prepared by the Journey creator.
+        for (uint256 i; i < quest.transactions.length; i++) {
+            /// @dev Load in the transaction.
+            Transaction memory transaction = quest.transactions[i];
 
-        /// @dev Confirm the quest was successful.
-        require(success, "Hero: Quest failed");
+            /// @dev Call the transaction.
+            (bool success, ) = transaction.target.call{
+                value: transaction.value
+            }(transaction.data);
 
-        /// @dev TODO: Implement the reward systems.
+            /// @dev Confirm the transaction was successful.
+            require(success, "Hero: Transaction failed");
+        }
 
         /// @dev Reward the user.
         for (uint256 i; i < quest.rewards.length; i++) {
@@ -125,11 +137,7 @@ contract Hero is IHerosJourney {
         );
 
         /// @dev Emit the event.
-        emit QuestCompleted(
-            address(this),
-            msg.sender,
-            _questId
-        );
+        emit QuestCompleted(address(this), msg.sender, _questId);
     }
 
     ////////////////////////////////////////////////////////
@@ -139,19 +147,20 @@ contract Hero is IHerosJourney {
     /**
      * @dev Determines if a user has the required credentials to call a function.
      * @param user The user to check.
+     * @param stops The stops to check.
+     * @param stopsRequired The number of stops required.
      * @return True if the user has the required credentials, false otherwise.
      */
-    function _canCall(address user, Quest memory quest)
-        internal
-        view
-        returns (bool)
-    {
+    function _canCall(
+        address user,
+        Stop[] memory stops,
+        uint256 stopsRequired
+    ) internal view returns (bool) {
         /// @dev Load in the stack.
         uint256 carried;
         uint256 i;
 
-        Stop[] memory stops = quest.stops;
-
+        /// @dev Load a hot slot for the active stop.
         Stop memory stop;
 
         /// @dev Determine if the user has met the proper conditions of access.
@@ -169,6 +178,6 @@ contract Hero is IHerosJourney {
         }
 
         /// @dev Final check if no mandatory badges had an insufficient balance.
-        return carried >= quest.stopsRequired;
+        return carried >= stopsRequired;
     }
 }

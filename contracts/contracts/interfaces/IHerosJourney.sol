@@ -8,7 +8,6 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IHerosJourney {
-
     ////////////////////////////////////////////////////////
     ///                      SCHEMA                      ///
     ////////////////////////////////////////////////////////
@@ -18,6 +17,12 @@ interface IHerosJourney {
         uint8 mandatory;
         uint256 id;
         uint256 balance;
+    }
+
+    struct Transaction {
+        address target;
+        bytes data;
+        uint256 value;
     }
 
     struct Reward {
@@ -40,9 +45,10 @@ interface IHerosJourney {
         uint256 value;
         uint256 max;
         uint256 stopsRequired;
-        Stop[] stops;
-        Reward[] rewards;
-        Badge badge;
+        Stop[] stops; /// ----------------- @dev Required to complete quest.
+        Transaction[] transactions; /// --- @dev Transactions inside quest.
+        Reward[] rewards; /// ------------- @dev ERC20 token(s).
+        Badge badge; /// ------------------ @dev ERC1155 badge.
     }
 
     struct Journey {
@@ -50,7 +56,7 @@ interface IHerosJourney {
         address caller;
         uint256 start;
         uint256 end;
-        Quest[] quests;
+        Quest[] quests; /// ---------------- @dev Quests available to complete.
     }
 
     ////////////////////////////////////////////////////////
